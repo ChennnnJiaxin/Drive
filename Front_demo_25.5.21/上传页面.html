@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>融合人脸特征分析的智能疲劳驾驶预警系统</title>
+    <style>
+        body 
+        /*背景图片*/
+        {
+            background-image: url('h1的图片.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .overlay 
+        {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.3);
+            z-index: -1;
+        }
+        .container 
+        {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;/*文本居中*/
+        }
+
+        /*大标题*/
+        h1 
+        {
+            color: yellow;
+            font-size: 36px;
+            margin: 20px 0;
+        }
+
+        /*二级标题*/
+        h2 
+        {
+            color: yellowgreen;
+            margin: 15px 0;
+        }
+
+        /*图片预览*/
+        .preview-container 
+        {
+            width: 200px;
+            height: 150px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(255,255,255,0.9);
+            margin-right: 20px;
+        }
+        /* 初始隐藏预览图 */
+        #imagePreview 
+        {
+            max-width: 100%;
+            max-height: 100%;
+            display: none;
+        }
+        .preview-placeholder 
+        {
+            color: #666;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        /*按钮样式*/
+        .button-container 
+        {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .button-group 
+        {
+            display: flex;
+            flex-direction: row; 
+            align-items: center;
+        }
+        
+        .photo-upload-label 
+        {
+            display: inline-block;
+            background-color: #165DFF;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin: 0 10px;
+            font-size: 1rem;
+        }
+        .photo-upload-label:hover 
+        {
+            background-color: #0E42B3;
+        }
+        input[type="file"] 
+        {
+            display: none; 
+        }
+
+        /*视频*/
+        .video-container 
+        {
+            margin: 30px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        video 
+        {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay"></div>
+    <div class="container">
+        <h1>欢迎来到智能疲劳驾驶预警系统</h1>
+        <h2>通过先进的计算机视觉技术，实时分析面部特征，精准识别疲劳状态，为您的驾驶安全保驾护航</h2>
+
+        <div class="button-container">
+            <!-- 图片预览容器 -->
+            <div class="preview-container" id="previewContainer">
+                <img src="" alt="预览图" id="imagePreview">
+                <div class="preview-placeholder">图片预览区域</div>
+            </div>
+            
+            <!-- 按钮 -->
+            <div class="button-group">
+                <label for="photoInput" class="photo-upload-label">
+                    <i class="fa fa-upload mr-2"></i> 点击上传图片
+                </label>
+                <input type="file" id="photoInput" accept="image/*">
+                
+                <button id="openCamBtn" class="photo-upload-label">
+                    <i class="fa fa-video-camera mr-2"></i> 打开摄像头
+                </button>
+                
+                <button id="startDetectionBtn" class="photo-upload-label" disabled>
+                    <i class="fa fa-play-circle mr-2"></i> 开始检测
+                </button>
+            </div>
+        </div>
+        
+        <!-- 显示视频 -->
+        <div class="video-container">
+            <video id="cam" autoplay width="660" style="display: none;"></video>
+        </div>
+        
+        <!-- 关闭按钮 -->
+        <div id="closeCamContainer" style="text-align: center; display: none;">
+            <button id="closeCamBtn" class="photo-upload-label">
+                <i class="fa fa-stop-circle mr-2"></i> 关闭摄像头
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() 
+        {
+            var video = document.getElementById('cam');
+            var openCamBtn = document.getElementById('openCamBtn');
+            var closeCamBtn = document.getElementById('closeCamBtn');
+            var closeCamContainer = document.getElementById('closeCamContainer');
+            var photoInput = document.getElementById('photoInput');
+            var imagePreview = document.getElementById('imagePreview');
+            var previewContainer = document.getElementById('previewContainer');
+            var startDetectionBtn = document.getElementById('startDetectionBtn');
+
+            // 图片上传预览功能
+            photoInput.addEventListener('change', function(e)
+            {
+                var file = e.target.files[0];
+                if (file) 
+                {
+                    var reader = new FileReader();
+                    reader.onload = function(event) {
+                        imagePreview.src = event.target.result;
+                        imagePreview.style.display = 'block';
+                        previewContainer.querySelector('.preview-placeholder').style.display = 'none';
+                    };
+                    reader.readAsDataURL(file);
+                } 
+                else 
+                {
+                    // 清除预览
+                    imagePreview.src = '';
+                    imagePreview.style.display = 'none';
+                    previewContainer.querySelector('.preview-placeholder').style.display = 'block';
+                }
+            });
+            
+            //打开摄像头
+            openCamBtn.addEventListener('click', function() 
+            {
+                navigator.mediaDevices.getUserMedia({video: true})
+                .then(function(stream) 
+                {
+                    video.srcObject = stream;
+                    video.style.display = 'block';
+                    closeCamContainer.style.display = 'block';
+                    openCamBtn.style.display = 'none';
+                    startDetectionBtn.disabled = false; // 启用开始检测按钮
+                })
+                .catch(function(error) 
+                {
+                    console.error('摄像头调用失败:', error);
+                    alert('无法访问摄像头，请检查权限或设备连接。');
+                });
+            });
+            
+            //关闭摄像头
+            closeCamBtn.addEventListener('click', function() 
+            {
+                if (video.srcObject) 
+                {
+                    video.srcObject.getTracks().forEach(track => track.stop());
+                    video.srcObject = null;
+                    video.style.display = 'none';
+                    closeCamContainer.style.display = 'none';
+                    openCamBtn.style.display = 'inline-block';
+                    startDetectionBtn.disabled = true; // 禁用开始检测按钮
+                }
+            });
+            
+            // 开始检测按钮点击事件
+            startDetectionBtn.addEventListener('click', function() 
+            {
+                if (video.srcObject && !video.paused) 
+                {
+                    // 添加疲劳检测的逻辑
+
+                    alert('疲劳检测已启动！系统正在分析您的面部特征...');
+                    //调用疲劳检测算法
+
+                } 
+                else 
+                {
+                    alert('请先打开摄像头并确保视频正在播放');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
