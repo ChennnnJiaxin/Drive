@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>疲劳检测结果</title>
+    <style>
+        .result-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .result-image {
+            max-width: 100%;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="result-container">
+        <h2>检测结果</h2>
+        <p>状态: <span id="state">未知</span></p>
+        <p>置信度: <span id="confidence">--</span></p>
+        <img id="result-image" class="result-image" src="" alt="检测图片">
+    </div>
+
+    <script>
+        // 从URL参数获取结果
+        const params = new URLSearchParams(window.location.search);
+        document.getElementById('state').textContent = params.get('state') || '未知';
+        document.getElementById('confidence').textContent = params.get('confidence') || '--';
+        document.getElementById('result-image').src = params.get('image_url') || '';
+    </script>
+</body>
+</html>
