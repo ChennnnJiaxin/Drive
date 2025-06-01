@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>融合人脸特征分析的智能疲劳驾驶预警系统</title>
+    <style>
+        body {
+            background-image: url('/static/images/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* 页眉 */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgb(116, 118, 220);
+            padding: 15px 20px;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            color: rgb(249, 253, 249);
+            font-size: 24px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 30px;
+            font-size: 16px;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #f3f317;/*关于我们、使用简介的颜色 */
+        }
+
+        /* 弹窗 */
+        .modal {
+            display: none; 
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            position: relative;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .modal h2 {
+            color: #165DFF;
+            margin-bottom: 20px;
+        }
+
+        .modal p {
+            color: #666;
+            line-height: 1.6;
+            text-align: left;
+        }
+
+        /* 检测结果弹窗 */
+        .result-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 30px 50px;
+            border-radius: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            z-index: 2000;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .safe-result {
+            background-color: rgba(0, 255, 0, 0.1);
+            border: 3px solid #00FF00;
+            color: #006600;
+        }
+
+        .warning-result {
+            background-color: rgba(255, 0, 0, 0.1);
+            border: 3px solid #FF0000;
+            color: #990000;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.3);
+            z-index: -1;
+        }
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 80px auto 20px; /* 顶部边距适应页眉 */
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: yellow;
+            font-size: 36px;
+            margin: 20px 0;
+        }
+        h2 {
+            color: yellowgreen;
+            margin: 15px 0;
+        }
+        .preview-container {
+            width: 200px;
+            height: 150px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(255,255,255,0.9);
+            margin-right: 20px;
+        }
+        #imagePreview, #videoPreview {
+            max-width: 100%;
+            max-height: 100%;
+            display: none;
+        }
+        .preview-placeholder {
+            color: #666;
+            font-size: 14px;
+            text-align: center;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .button-group {
+            display: flex;
+            flex-direction: row; 
+            align-items: center;
+        }
+        .photo-upload-label {
+            display: inline-block;
+            background-color: #165DFF;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin: 0 10px;
+            font-size: 1rem;
+        }
+        .photo-upload-label:hover {
+            background-color: #0E42B3;
+        }
+        input[type="file"] {
+            display: none; 
+        }
+        .video-container {
+            margin: 30px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        video {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+
+        #startDetectionBtn {
+            margin-left: 20px; 
+            display: none; 
+        }
+        
+        #deleteFileBtn {
+            margin-top: 10px;
+            background-color: #FF4D4F;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 0.9rem;
+            border: none;
+            display: none;
+        }
+        #deleteFileBtn:hover {
+            background-color: #D9363E;
+        }
+    </style>
+</head>
+<body>
+    <!-- 页眉 -->
+    <header>
+        <div class="nav-container">
+            <a href="#" class="logo">疲劳驾驶预警系统</a>
+            <div class="nav-links">
+                <a href="#" id="usageLink">使用简介</a>
+                <a href="#" id="aboutLink">关于我们</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 简介弹窗 -->
+    <div id="usageModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeUsage">&times;</span>
+            <h2>使用简介</h2>
+            <p>
+                本系统支持三种检测模式：<br>
+                1. 上传图片检测：选择本地图片文件进行静态面部分析<br>
+                2. 上传视频检测：分析视频文件中的连续画面（支持mp4、avi等常见格式）<br>
+                3. 实时摄像头检测：通过摄像头实时捕捉画面并进行动态疲劳监测<br>
+                <br>
+                操作步骤：<br>
+                - 选择检测模式并上传文件/打开摄像头<br>
+                - 点击"开始检测"按钮启动分析<br>
+                - 系统将实时显示疲劳等级和预警信息
+            </p>
+        </div>
+    </div>
+
+    <!-- 关于我们模态弹窗 -->
+    <div id="aboutModal" class="modal">
+        <div class="nav-links">
+            <a href="#" id="aboutLink">关于我们</a>
+        </div>
+        <div class="modal-content">
+            <span class="close-btn" id="closeAbout">&times;</span>
+            <h2>关于我们</h2>
+            <p>
+                本系统由华南师范大学人工智能24级团队（陈嘉欣、陈丽文、张家豪、钟皓玮）开发，致力于通过融合人脸特征分析的智能疲劳驾驶预警系统解决驾驶安全问题。<br>
+                团队核心技术包括：<br>
+                - 基于深度学习的人脸检测算法<br>
+                - 疲劳特征多维分析模型<br>
+                - 实时视频流处理技术<br>
+            </p>
+        </div>
+    </div>
+
+    <!-- 检测结果弹窗 -->
+    <div id="resultPopup" class="result-popup safe-result">
+        无疲劳驾驶<br>
+        <span style="font-size: 16px; color: #666;">安全驾驶，请注意保持车距</span>
+    </div>
+    <div id="warningPopup" class="result-popup warning-result">
+        存在疲劳驾驶<br>
+        <span style="font-size: 16px; color: #666;">请您就近停车休息</span>
+    </div>
+
+    <div class="overlay"></div>
+    <div class="container">
+        <h1>欢迎来到智能疲劳驾驶预警系统</h1>
+        <h2>通过先进的计算机视觉技术，实时分析面部特征，精准识别疲劳状态，为您的驾驶安全保驾护航</h2>
+
+        <div class="button-container">
+            <div class="preview-container" id="previewContainer">
+                <img src="" alt="图片预览" id="imagePreview">
+                <video controls src="" alt="视频预览" id="videoPreview" style="max-height: 100%;">
+                <div class="preview-placeholder">文件预览区域</div>
+            </div>
+            
+            <div class="button-group">
+                <label for="photoInput" class="photo-upload-label">
+                    <i class="fa fa-upload mr-2"></i> 上传图片
+                </label>
+                <input type="file" id="photoInput" accept="image/*">
+                
+                <label for="videoInput" class="photo-upload-label">
+                    <i class="fa fa-film mr-2"></i> 上传视频
+                </label>
+                <input type="file" id="videoInput" accept="video/*">
+                
+                <button id="openCamBtn" class="photo-upload-label">
+                    <i class="fa fa-video-camera mr-2"></i> 打开摄像头
+                </button>
+                
+                <button id="startDetectionBtn" class="photo-upload-label" disabled>
+                    <i class="fa fa-play-circle mr-2"></i> 开始检测
+                </button>
+            </div>
+        </div>
+        
+        <button id="deleteFileBtn" style="display: none;">
+            <i class="fa fa-trash mr-2"></i> 删除文件
+        </button>
+        
+        <div class="video-container">
+            <video id="cam" autoplay width="550" style="display: none;"></video>
+        </div>
+        
+        <div id="closeCamContainer" style="text-align: center; display: none;">
+            <button id="closeCamBtn" class="photo-upload-label">
+                <i class="fa fa-stop-circle mr-2"></i> 关闭摄像头
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // 获取模态弹窗元素
+            const usageModal = document.getElementById('usageModal');
+            const aboutModal = document.getElementById('aboutModal');
+            const closeUsageBtn = document.getElementById('closeUsage');
+            const closeAboutBtn = document.getElementById('closeAbout');
+            const usageLink = document.getElementById('usageLink');
+            const aboutLink = document.getElementById('aboutLink');
+            
+            // 获取结果弹窗元素
+            const resultPopup = document.getElementById('resultPopup');
+            const warningPopup = document.getElementById('warningPopup');
+
+            // 打开"使用简介"弹窗
+            usageLink.addEventListener('click', function(e) {
+                e.preventDefault(); // 阻止默认跳转行为
+                usageModal.style.display = 'block';
+            });
+
+            // 打开"关于我们"弹窗
+            aboutLink.addEventListener('click', function(e) {
+                e.preventDefault(); // 阻止默认跳转行为
+                aboutModal.style.display = 'block';
+            });
+
+            // 关闭"使用简介"弹窗
+            closeUsageBtn.addEventListener('click', function() {
+                usageModal.style.display = 'none';
+            });
+
+            // 关闭"关于我们"弹窗
+            closeAboutBtn.addEventListener('click', function() {
+                aboutModal.style.display = 'none';
+            });
+
+            // 点击弹窗外部关闭弹窗
+            window.addEventListener('click', function(event) {
+                if (event.target.classList.contains('modal')) {
+                    event.target.style.display = 'none';
+                }
+            });
+
+            var video = document.getElementById('cam');
+            var openCamBtn = document.getElementById('openCamBtn');
+            var closeCamBtn = document.getElementById('closeCamBtn');
+            var closeCamContainer = document.getElementById('closeCamContainer');
+            var photoInput = document.getElementById('photoInput');
+            var videoInput = document.getElementById('videoInput');
+            var imagePreview = document.getElementById('imagePreview');
+            var videoPreview = document.getElementById('videoPreview');
+            var previewContainer = document.getElementById('previewContainer');
+            var startDetectionBtn = document.getElementById('startDetectionBtn');
+            var deleteFileBtn = document.getElementById('deleteFileBtn'); 
+
+            // 图片上传预览
+            photoInput.addEventListener('change', function(e) {
+                handleFileUpload(e, 'image');
+            });
+
+            // 视频上传预览
+            videoInput.addEventListener('change', function(e) {
+                handleFileUpload(e, 'video');
+            });
+
+            function handleFileUpload(e, type) {
+                var file = e.target.files[0];
+                if (file) {
+                    var reader = new FileReader();
+                    reader.onload = function(event) {
+                        clearPreview();
+
+                        if (type === 'image') {
+                            imagePreview.src = event.target.result;
+                            imagePreview.style.display = 'block';
+                        } else {
+                            videoPreview.src = URL.createObjectURL(file);
+                            videoPreview.style.display = 'block';
+                        }
+                        previewContainer.querySelector('.preview-placeholder').style.display = 'none';
+                        startDetectionBtn.disabled = false;
+                        startDetectionBtn.style.display = 'inline-block';
+                        deleteFileBtn.style.display = 'inline-block';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    clearPreview();
+                }
+            }
+
+            // 打开摄像头功能
+            openCamBtn.addEventListener('click', function() {
+                navigator.mediaDevices.getUserMedia({video: true})
+                .then(function(stream) {
+                    video.srcObject = stream;
+                    video.style.display = 'block';
+                    closeCamContainer.style.display = 'block';
+                    openCamBtn.style.display = 'none';
+                    
+                    clearPreview();
+                    
+                    startDetectionBtn.disabled = false;
+                    startDetectionBtn.style.display = 'inline-block';
+                })
+                .catch(function(error) {
+                    console.error('摄像头调用失败:', error);
+                    alert('无法访问摄像头，请检查权限或设备连接。');
+                });
+            });
+
+            // 关闭摄像头功能
+            closeCamBtn.addEventListener('click', function() {
+                if (video.srcObject) {
+                    video.srcObject.getTracks().forEach(track => track.stop());
+                    video.srcObject = null;
+                    video.style.display = 'none';
+                    closeCamContainer.style.display = 'none';
+                    openCamBtn.style.display = 'inline-block';
+                    startDetectionBtn.style.display = 'none';
+                    startDetectionBtn.disabled = true;
+                }
+            });
+
+            // 清除预览
+            function clearPreview() {
+                imagePreview.src = '';
+                imagePreview.style.display = 'none';
+                videoPreview.src = '';
+                videoPreview.style.display = 'none';
+                previewContainer.querySelector('.preview-placeholder').style.display = 'block';
+            }
+
+            // 删除文件按钮功能
+            deleteFileBtn.addEventListener('click', function() {
+                photoInput.value = '';
+                videoInput.value = '';
+                clearPreview();
+                deleteFileBtn.style.display = 'none';
+                startDetectionBtn.style.display = 'none';
+                startDetectionBtn.disabled = true;
+            });
+
+            startDetectionBtn.addEventListener('click', function() {
+                var hasSource = (video.srcObject && !video.paused) || 
+                                (imagePreview.style.display === 'block') || 
+                                (videoPreview.style.display === 'block');
+                
+                if (hasSource) {
+                    // 模拟检测结果（实际需替换为真实检测逻辑）
+                    const isFatigued = Math.random() > 0.5; // 50%概率触发预警
+                    
+                    // 显示对应弹窗
+                    if (isFatigued) {
+                        showWarningPopup();
+                    } else {
+                        showSafePopup();
+                    }
+                    
+                    // 模拟检测过程提示（可保留或删除）
+                    alert('检测中... 正在分析面部特征...');
+                } else {
+                    alert('请先上传文件或打开摄像头');
+                }
+            });
+
+            function showSafePopup() {
+                resultPopup.style.display = 'block';
+                // 3秒后自动关闭弹窗
+                setTimeout(() => {
+                    resultPopup.style.display = 'none';
+                }, 3000);
+            }
+
+            function showWarningPopup() {
+                warningPopup.style.display = 'block';
+                // 5秒后自动关闭弹窗（预警可延长显示时间）
+                setTimeout(() => {
+                    warningPopup.style.display = 'none';
+                }, 5000);
+            }
+
+            window.addEventListener('click', function(event) {
+                if (event.target === resultPopup || event.target === warningPopup) {
+                    event.target.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
